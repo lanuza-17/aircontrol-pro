@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <title>AirControl Pro</title>
+  <meta name="description" content="AirControl Pro — Smart IoT Air Conditioning Dashboard" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════
+       DESKTOP SIDEBAR (hidden on mobile)
+  ═══════════════════════════════════════════ -->
+  <aside class="sidebar" id="sidebar">
+
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">
+        <span class="material-icons-round">ac_unit</span>
+      </div>
+      <div class="sidebar-logo-text">
+        <span class="sidebar-title">AirControl Pro</span>
+        <span class="sidebar-sub">IoT Dashboard</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <button class="sidebar-item active" data-page="pageHome">
+        <span class="material-icons-round">home</span>
+        <span>Inicio</span>
+      </button>
+      <button class="sidebar-item" data-page="pageEnergy">
+        <span class="material-icons-round">bolt</span>
+        <span>Energía</span>
+      </button>
+      <button class="sidebar-item" data-page="pageControls">
+        <span class="material-icons-round">tune</span>
+        <span>Control</span>
+      </button>
+      <button class="sidebar-item" data-page="pageSettings">
+        <span class="material-icons-round">settings</span>
+        <span>Configuración</span>
+      </button>
+    </nav>
+
+    <!-- Spacer -->
+    <div style="flex:1"></div>
+
+    <!-- Live status chip -->
+    <div class="sidebar-status">
+      <span class="sidebar-status-dot"></span>
+      <div class="sidebar-status-text">
+        <span class="sidebar-status-name">Sala Principal</span>
+        <span class="sidebar-status-conn">● Conectado</span>
+      </div>
+    </div>
+
+    <!-- Dark mode toggle in sidebar -->
+    <button class="sidebar-dark-btn" id="sidebarDarkBtn">
+      <span class="material-icons-round" id="sidebarDarkIcon">light_mode</span>
+      <span id="sidebarDarkLabel">Modo claro</span>
+    </button>
+
+  </aside>
+
+  <!-- ═══════════════════════════════════════════
+       TOP APP BAR
+  ═══════════════════════════════════════════ -->
+  <header class="top-app-bar">
+    <div class="app-bar-content">
+      <div class="app-bar-left">
+        <span class="material-icons-round app-bar-logo">ac_unit</span>
+        <div class="app-bar-titles">
+          <span class="app-bar-title">AirControl Pro</span>
+          <span class="app-bar-subtitle" id="appBarSubtitle">Sala Principal • Activo</span>
+        </div>
+      </div>
+      <div class="app-bar-actions">
+        <button class="icon-btn" id="darkModeToggle" title="Cambiar modo">
+          <span class="material-icons-round" id="darkModeIcon">light_mode</span>
+        </button>
+        <button class="icon-btn" id="notifBtn" title="Notificaciones">
+          <span class="material-icons-round">notifications</span>
+          <span class="notif-badge" id="notifBadge"></span>
+        </button>
+        <div class="avatar">JD</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Alert banner -->
+  <div class="alert-banner" id="alertBanner" style="display:none;">
+    <span class="material-icons-round alert-icon">warning</span>
+    <span class="alert-text" id="alertText">¡Consumo alto detectado!</span>
+    <button class="alert-close" id="alertClose">
+      <span class="material-icons-round">close</span>
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MAIN CONTENT
+  ═══════════════════════════════════════════ -->
+  <main class="main-content">
+
+    <!-- ══════════════════════════════
+         PAGE: HOME
+    ══════════════════════════════ -->
+    <section class="page active" id="pageHome">
+
+      <!-- Left column wrapper (display:contents on mobile → column on desktop) -->
+      <div class="home-left">
+        <!-- Hero card -->
+        <div class="hero-card">
+          <div class="hero-glass">
+            <div class="hero-top">
+              <div class="hero-status-pill">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusLabel">AC ON</span>
+              </div>
+              <button class="power-btn" id="powerBtn">
+                <span class="material-icons-round">power_settings_new</span>
+              </button>
+            </div>
+            <div class="hero-temp">
+              <span class="temp-value" id="roomTemp">24</span>
+              <span class="temp-unit">°C</span>
+            </div>
+            <div class="hero-label">Temperatura de la sala</div>
+            <div class="hero-meta">
+              <div class="meta-item">
+                <span class="material-icons-round">thermostat</span>
+                <span>Objetivo: <strong id="targetTempDisplay">22°C</strong></span>
+              </div>
+              <div class="meta-item">
+                <span class="material-icons-round">water_drop</span>
+                <span>Humedad: <strong id="humidityDisplay">58%</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Consumption card -->
+        <div class="consume-card">
+          <div class="consume-header">
+            <span class="material-icons-round">bolt</span>
+            Consumo Acumulado
+          </div>
+          <div class="consume-value">
+            <span id="kwhBig">1.24</span> <span>kWh</span>
+          </div>
+          <div class="consume-sub">Lectura del mes actual</div>
+        </div>
+      </div>
+
+      <!-- Right column wrapper -->
+      <div class="home-right">
+        <div class="section-label">
+          <span class="material-icons-round">bar_chart</span>
+          Estadísticas en vivo
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon energy-icon"><span class="material-icons-round">bolt</span></div>
+            <div class="stat-info">
+              <span class="stat-value" id="kwhDisplay">1.24</span>
+              <span class="stat-unit">kWh</span>
+              <span class="stat-label">Energía usada</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon cost-icon"><span class="material-icons-round">payments</span></div>
+            <div class="stat-info">
+              <span class="stat-value" id="costDisplay">44.60</span>
+              <span class="stat-unit">C$</span>
+              <span class="stat-label">Costo hoy</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon monthly-icon"><span class="material-icons-round">calendar_month</span></div>
+            <div class="stat-info">
+              <span class="stat-value" id="monthlyCostDisplay">1,330</span>
+              <span class="stat-unit">C$</span>
+              <span class="stat-label">Est. mensual</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon efficiency-icon" id="efficiencyIconCard">
+              <span class="material-icons-round" id="efficiencyIcon">eco</span>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value efficiency-text" id="efficiencyDisplay">Eficiente</span>
+              <span class="stat-unit"></span>
+              <span class="stat-label">Eficiencia</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="recommendation-card">
+          <div class="rec-icon"><span class="material-icons-round">tips_and_updates</span></div>
+          <div class="rec-content">
+            <span class="rec-title">Consejo inteligente</span>
+            <span class="rec-text" id="recText">Establece la temperatura a 24°C para reducir el consumo energético un 15%.</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════
+         PAGE: ENERGY
+    ══════════════════════════════ -->
+    <section class="page" id="pageEnergy">
+
+      <!-- Top row: line + bar charts -->
+      <div class="energy-row-top">
+        <div class="energy-chart-block">
+          <div class="section-label">
+            <span class="material-icons-round">show_chart</span>
+            Consumo por hora (kWh)
+          </div>
+          <div class="chart-card"><canvas id="lineChart"></canvas></div>
+        </div>
+        <div class="energy-chart-block">
+          <div class="section-label">
+            <span class="material-icons-round">bar_chart</span>
+            Costo diario (C$)
+          </div>
+          <div class="chart-card"><canvas id="barChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Bottom: donut -->
+      <div class="section-label">
+        <span class="material-icons-round">donut_large</span>
+        Distribución de energía
+      </div>
+      <div class="chart-card donut-card">
+        <div class="donut-wrap"><canvas id="donutChart"></canvas></div>
+        <div class="donut-legend">
+          <div class="legend-item">
+            <span class="legend-dot" style="background:#7857FF"></span>
+            <span class="legend-label">Aire AC</span>
+            <span class="legend-val" id="acPct">68%</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background:#fbbf24"></span>
+            <span class="legend-label">Luces</span>
+            <span class="legend-val" id="lightPct">22%</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background:#4B7BF5"></span>
+            <span class="legend-label">Standby</span>
+            <span class="legend-val" id="standbyPct">10%</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════
+         PAGE: CONTROLS
+    ══════════════════════════════ -->
+    <section class="page" id="pageControls">
+
+      <!-- Controls left: temp / fan / mode -->
+      <div class="controls-left">
+
+        <div class="section-label">
+          <span class="material-icons-round">thermostat</span>
+          Temperatura
+        </div>
+        <div class="control-card temp-control-card">
+          <div class="temp-control-display">
+            <div class="temp-display-big">
+              <span id="targetTempBig">22</span>
+              <span class="temp-super">°C</span>
+            </div>
+            <span class="temp-control-label">Temperatura objetivo</span>
+          </div>
+          <div class="temp-buttons">
+            <button class="temp-btn decrease" id="tempDecrease">
+              <span class="material-icons-round">remove</span>
+            </button>
+            <div class="temp-range">
+              <span class="temp-range-label">16°C – 30°C</span>
+            </div>
+            <button class="temp-btn increase" id="tempIncrease">
+              <span class="material-icons-round">add</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="section-label">
+          <span class="material-icons-round">air</span>
+          Velocidad del ventilador
+        </div>
+        <div class="chip-group" id="fanGroup">
+          <button class="chip" data-value="low">Baja</button>
+          <button class="chip active" data-value="medium">Media</button>
+          <button class="chip" data-value="high">Alta</button>
+          <button class="chip" data-value="auto">Auto</button>
+        </div>
+
+        <div class="section-label">
+          <span class="material-icons-round">tune</span>
+          Modo
+        </div>
+        <div class="mode-grid" id="modeGroup">
+          <button class="mode-btn active" data-mode="cool">
+            <span class="material-icons-round">ac_unit</span><span>Frío</span>
+          </button>
+          <button class="mode-btn" data-mode="dry">
+            <span class="material-icons-round">water_drop</span><span>Seco</span>
+          </button>
+          <button class="mode-btn" data-mode="fan">
+            <span class="material-icons-round">air</span><span>Ventil.</span>
+          </button>
+          <button class="mode-btn" data-mode="eco">
+            <span class="material-icons-round">eco</span><span>Eco</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Controls right: AC + Light devices -->
+      <div class="controls-right">
+
+        <div class="section-label">
+          <span class="material-icons-round">ac_unit</span>
+          Mis Aires Acondicionados
+        </div>
+        <div class="devices-grid" id="acDevicesGrid"></div>
+        <button class="add-device-btn" id="addAcBtn">
+          <span class="material-icons-round">add_circle</span>
+          Agregar Aire Acondicionado
+        </button>
+
+        <div class="section-label" style="margin-top:6px;">
+          <span class="material-icons-round">lightbulb</span>
+          Mis Luces
+        </div>
+        <div class="devices-grid" id="lightDevicesGrid"></div>
+        <button class="add-device-btn" id="addLightBtn">
+          <span class="material-icons-round">add_circle</span>
+          Agregar Luz
+        </button>
+
+      </div>
+
+      <!-- Schedule: full width -->
+      <div class="controls-full">
+        <div class="section-label">
+          <span class="material-icons-round">schedule</span>
+          Programación
+        </div>
+        <div class="control-card schedule-card">
+          <div class="schedule-toggle-row">
+            <div class="schedule-info">
+              <span class="schedule-title">Horario automático</span>
+              <span class="schedule-sub" id="scheduleSub">Se enciende a las 07:00, apaga a las 22:00</span>
+            </div>
+            <label class="android-switch">
+              <input type="checkbox" id="scheduleToggle" checked>
+              <span class="switch-track"><span class="switch-thumb"></span></span>
+            </label>
+          </div>
+          <div class="schedule-times" id="scheduleTimes">
+            <div class="time-field">
+              <label><span class="material-icons-round">play_circle</span>Hora inicio</label>
+              <input type="time" id="scheduleStart" value="07:00">
+            </div>
+            <div class="time-field">
+              <label><span class="material-icons-round">stop_circle</span>Hora fin</label>
+              <input type="time" id="scheduleStop" value="22:00">
+            </div>
+          </div>
+          <button class="save-schedule-btn" id="saveScheduleBtn">
+            <span class="material-icons-round">save</span>
+            Guardar horario
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════
+         PAGE: SETTINGS
+    ══════════════════════════════ -->
+    <section class="page" id="pageSettings">
+
+      <div class="section-label">
+        <span class="material-icons-round">settings</span>
+        Configuración
+      </div>
+
+      <div class="settings-list">
+        <div class="settings-item">
+          <div class="settings-item-left">
+            <span class="material-icons-round settings-ico">location_on</span>
+            <div>
+              <span class="settings-item-title">Nombre del cuarto</span>
+              <span class="settings-item-sub">Sala Principal</span>
+            </div>
+          </div>
+          <span class="material-icons-round settings-arrow">chevron_right</span>
+        </div>
+        <div class="settings-item">
+          <div class="settings-item-left">
+            <span class="material-icons-round settings-ico">thermostat</span>
+            <div>
+              <span class="settings-item-title">Unidad de temperatura</span>
+              <span class="settings-item-sub">Celsius (°C)</span>
+            </div>
+          </div>
+          <span class="material-icons-round settings-arrow">chevron_right</span>
+        </div>
+        <div class="settings-item">
+          <div class="settings-item-left">
+            <span class="material-icons-round settings-ico">attach_money</span>
+            <div>
+              <span class="settings-item-title">Tarifa de energía</span>
+              <span class="settings-item-sub">C$ 36.00 / kWh</span>
+            </div>
+          </div>
+          <span class="material-icons-round settings-arrow">chevron_right</span>
+        </div>
+        <div class="settings-item">
+          <div class="settings-item-left">
+            <span class="material-icons-round settings-ico">wifi</span>
+            <div>
+              <span class="settings-item-title">Conexión del dispositivo</span>
+              <span class="settings-item-sub connected-text">● Conectado</span>
+            </div>
+          </div>
+          <span class="material-icons-round settings-arrow">chevron_right</span>
+        </div>
+        <div class="settings-item">
+          <div class="settings-item-left">
+            <span class="material-icons-round settings-ico">notifications</span>
+            <div>
+              <span class="settings-item-title">Alertas</span>
+              <span class="settings-item-sub">Avisos de consumo alto</span>
+            </div>
+          </div>
+          <label class="android-switch small">
+            <input type="checkbox" id="alertsToggle" checked>
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </label>
+        </div>
+        <div class="settings-item">
+          <div class="settings-item-left">
+            <span class="material-icons-round settings-ico">dark_mode</span>
+            <div>
+              <span class="settings-item-title">Modo oscuro</span>
+              <span class="settings-item-sub">Cambiar apariencia</span>
+            </div>
+          </div>
+          <label class="android-switch small">
+            <input type="checkbox" id="darkModeSwitch" checked>
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </label>
+        </div>
+        <div class="settings-item">
+          <div class="settings-item-left">
+            <span class="material-icons-round settings-ico">update</span>
+            <div>
+              <span class="settings-item-title">Actualizaciones en vivo</span>
+              <span class="settings-item-sub">Cada 3 segundos</span>
+            </div>
+          </div>
+          <label class="android-switch small">
+            <input type="checkbox" id="liveUpdateToggle" checked>
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="about-card">
+        <div class="about-icon">
+          <span class="material-icons-round">ac_unit</span>
+        </div>
+        <div class="about-info">
+          <span class="about-title">AirControl Pro</span>
+          <span class="about-sub">v2.1.0 — Dashboard IoT</span>
+          <span class="about-desc">Monitoreo y control inteligente de aire acondicionado para hogares modernos. Desarrollado para proyecto de tesis IoT.</span>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       BOTTOM NAV (mobile only)
+  ═══════════════════════════════════════════ -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-page="pageHome">
+      <span class="material-icons-round nav-icon">home</span>
+      <span class="nav-label">Inicio</span>
+      <span class="nav-indicator"></span>
+    </button>
+    <button class="nav-item" data-page="pageEnergy">
+      <span class="material-icons-round nav-icon">bolt</span>
+      <span class="nav-label">Energía</span>
+      <span class="nav-indicator"></span>
+    </button>
+    <button class="nav-item" data-page="pageControls">
+      <span class="material-icons-round nav-icon">tune</span>
+      <span class="nav-label">Control</span>
+      <span class="nav-indicator"></span>
+    </button>
+    <button class="nav-item" data-page="pageSettings">
+      <span class="material-icons-round nav-icon">settings</span>
+      <span class="nav-label">Config.</span>
+      <span class="nav-indicator"></span>
+    </button>
+  </nav>
+
+  <!-- Add Device Modal -->
+  <div class="modal-overlay" id="addDeviceModal" style="display:none;">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title" id="modalTitle">Agregar dispositivo</div>
+      <div class="modal-type-row" id="modalTypeRow">
+        <button class="modal-type-btn selected" data-type="ac">
+          <span class="material-icons-round">ac_unit</span>
+          Aire AC
+        </button>
+        <button class="modal-type-btn" data-type="light">
+          <span class="material-icons-round">lightbulb</span>
+          Luz
+        </button>
+      </div>
+      <div class="modal-field">
+        <label>Nombre del dispositivo</label>
+        <input type="text" class="modal-input" id="deviceNameInput" placeholder="Ej: Habitación principal" maxlength="30">
+      </div>
+      <div class="modal-actions">
+        <button class="modal-cancel" id="modalCancel">Cancelar</button>
+        <button class="modal-confirm" id="modalConfirm">
+          <span class="material-icons-round">add</span>
+          Agregar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="/script.js"></script>
+</body>
+</html>
